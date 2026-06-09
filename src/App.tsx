@@ -1,4 +1,12 @@
 import { useState, useEffect } from "react";
+import type {
+  BizOpsData,
+  DeptEntry,
+  DeptTemplate,
+  EntryFormProps,
+  MiniBarProps,
+  StatusPillProps,
+} from "./types";
 
 const MONTHS = [
   "Jan",
@@ -31,7 +39,7 @@ const MONTH_FULL = [
 const CURRENT_MONTH = new Date().getMonth();
 const CURRENT_YEAR = new Date().getFullYear();
 
-const DEPT_TEMPLATES = [
+const DEPT_TEMPLATES: DeptTemplate[] = [
   {
     id: "hr",
     label: "HR PeopleOps",
@@ -112,10 +120,10 @@ const DEPT_TEMPLATES = [
   },
 ];
 
-function getMonthKey(year, month) {
+function getMonthKey(year: number, month: number): string {
   return `${year}-${String(month + 1).padStart(2, "0")}`;
 }
-function getDefaultVals(dept) {
+function getDefaultVals(dept: DeptTemplate): number[] {
   return dept.kpis.map((k) =>
     k.unit === "%"
       ? k.target
@@ -125,8 +133,8 @@ function getDefaultVals(dept) {
   );
 }
 
-function StatusPill({ value, target, unit, small }) {
-  let status;
+function StatusPill({ value, target, unit, small }: StatusPillProps) {
+  let status: string;
   if (unit === "incidents" || unit === "orders")
     status =
       value === 0 ? "on-track" : value <= 2 ? "watch" : "needs-attention";
@@ -177,7 +185,7 @@ function StatusPill({ value, target, unit, small }) {
   );
 }
 
-function MiniBar({ value, target, unit, color }) {
+function MiniBar({ value, target, unit, color }: MiniBarProps) {
   const isLower = unit === "incidents" || unit === "orders";
   const pct = isLower
     ? value === 0
@@ -214,7 +222,7 @@ function MiniBar({ value, target, unit, color }) {
   );
 }
 
-function EntryForm({ dept, monthKey, data, onSave, onClose }) {
+function EntryForm({ dept, monthKey, data, onSave, onClose }: EntryFormProps) {
   const existing = data[monthKey]?.[dept.id];
   const [values, setValues] = useState(
     existing?.values ?? getDefaultVals(dept)
@@ -468,10 +476,12 @@ function EntryForm({ dept, monthKey, data, onSave, onClose }) {
 export default function Dashboard() {
   const [selectedMonth, setSelectedMonth] = useState(CURRENT_MONTH);
   const [selectedYear] = useState(CURRENT_YEAR);
-  const [activeView, setActiveView] = useState("overview");
-  const [activeDeptId, setActiveDeptId] = useState(null);
-  const [editingDeptId, setEditingDeptId] = useState(null);
-  const [data, setData] = useState({});
+  const [activeView, setActiveView] = useState<"overview" | "detail">(
+    "overview"
+  );
+  const [activeDeptId, setActiveDeptId] = useState<string | null>(null);
+  const [editingDeptId, setEditingDeptId] = useState<string | null>(null);
+  const [data, setData] = useState<BizOpsData>({});
   const [loading, setLoading] = useState(true);
   const [saveMsg, setSaveMsg] = useState("");
 
@@ -490,7 +500,11 @@ export default function Dashboard() {
     load();
   }, []);
 
-  async function handleSaveEntry(deptId, mKey, entry) {
+  async function handleSaveEntry(
+    deptId: string,
+    mKey: string,
+    entry: DeptEntry
+  ) {
     const updated = {
       ...data,
       [mKey]: { ...(data[mKey] || {}), [deptId]: entry },
@@ -505,15 +519,18 @@ export default function Dashboard() {
     }
   }
 
-  const getDeptVals = (dept, mKey) =>
+  const getDeptVals = (dept: DeptTemplate, mKey: string) =>
     data[mKey]?.[dept.id]?.values ?? getDefaultVals(dept);
-  const getDeptTasks = (dept, mKey) => data[mKey]?.[dept.id]?.tasks ?? [];
-  const getDeptNotes = (dept, mKey) => data[mKey]?.[dept.id]?.notes ?? "";
-  const hasData = (dept, mKey) => !!data[mKey]?.[dept.id];
+  const getDeptTasks = (dept: DeptTemplate, mKey: string) =>
+    data[mKey]?.[dept.id]?.tasks ?? [];
+  const getDeptNotes = (dept: DeptTemplate, mKey: string) =>
+    data[mKey]?.[dept.id]?.notes ?? "";
+  const hasData = (dept: DeptTemplate, mKey: string) =>
+    !!data[mKey]?.[dept.id];
 
-  function getScore(dept, mKey) {
+  function getScore(dept: DeptTemplate, mKey: string) {
     const vals = getDeptVals(dept, mKey);
-    return dept.kpis.reduce((sum, kpi, ki) => {
+    return dept.kpis.reduce((sum: number, kpi, ki) => {
       const v = vals[ki];
       const isLower = kpi.unit === "incidents" || kpi.unit === "orders";
       return (
